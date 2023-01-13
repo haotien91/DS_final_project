@@ -5,6 +5,8 @@
 #include<vector>
 #include<iostream>
 
+#include "Search_parse.h"
+
 using namespace std;
 
 // Utility Func
@@ -43,6 +45,9 @@ vector<string> split(const string& str, const string& delim) {
 	return res;
 }
 
+// parsing query.txt
+
+
 
 int main(int argc, char *argv[])
 {
@@ -50,7 +55,6 @@ int main(int argc, char *argv[])
 	// 1. data directory in data folder
 	// 2. number of txt files
 	// 3. output route
-	cout << argv[1] << endl;
 
     string data_dir = argv[1] + string("/");
 	string query = string(argv[2]);
@@ -74,9 +78,9 @@ int main(int argc, char *argv[])
 
 	vector<string> title = word_parse(tmp_string);
 
-	for(auto &word : title){
-		cout << word << endl;
-	}
+	// for(auto &word : title){
+	// 	cout << word << endl;
+	// }
 
     // GET CONTENT LINE BY LINE
 	while(getline(fi, tmp)){
@@ -92,9 +96,37 @@ int main(int argc, char *argv[])
 		// }
 		//......
 	}
-
     // CLOSE FILE
 	fi.close();
+
+	
+
+
+
+
+
+
+
+
+
+	// separate input by different lines
+	fi.open("query.txt", ios::in);
+	
+	vector<vector<string> > parsed;
+	while(getline(fi, tmp)){
+		tmp_string = split(tmp, " ");
+		// for (auto &word : tmp_string){
+		// 	cout << word << endl;
+		// }
+		parsed.push_back(tmp_string);
+	}
+	fi.close();
+
+	
+
+
+
+
 }
 
 

@@ -4,6 +4,9 @@
 #include<cstring>
 #include<vector>
 #include<iostream>
+#include<algorithm>
+
+#include "Search_parse.h"
 
 using namespace std;
 
@@ -36,11 +39,50 @@ vector<string> split(const string& str, const string& delim) {
 	char *p = strtok(strs, d);
 	while(p) {
 		string s = p; //分割得到的字串轉換為string型別
+		transform(s.begin(), s.end(), s.begin(), ::tolower); //! 所有字元轉為小寫
 		res.push_back(s); //存入結果陣列
 		p = strtok(NULL, d);
 	}
 
 	return res;
+}
+
+// parsing query.txt
+
+void parse_query(vector<vector<string>> &parsed, string query) {
+	fstream fi;
+	fi.open(query, ios::in);
+	string tmp;
+	vector<string> tmp_string;
+
+	while(getline(fi, tmp)){
+		tmp_string = split(tmp, " ");
+		// for (auto &word : tmp_string){
+		// 	cout << word << endl;
+		// }
+		parsed.push_back(tmp_string);
+	}
+	fi.close();
+}
+
+// SUFFIX compare
+int suffix_compare(SuffixTree *trie, const string sub_str) {
+	int find = 0;
+
+	return find;
+}
+
+// EXACT compare
+int exact_compare(SuffixTree *trie, const string sub_str) {
+	int find = 0;
+
+	return find;
+}
+// PREFIX compare
+int prefix_compare(SuffixTree *trie, const string sub_str) {
+	int find = 0;
+
+	return find;
 }
 
 
@@ -50,17 +92,26 @@ int main(int argc, char *argv[])
 	// 1. data directory in data folder
 	// 2. number of txt files
 	// 3. output route
-	cout << argv[1] << endl;
 
     string data_dir = argv[1] + string("/");
 	string query = string(argv[2]);
 	string output = string(argv[3]);
+
+	cout << data_dir << endl;
 
 	// Read File & Parser Example
 
 	string file, title_name, tmp;
 	fstream fi;
 	vector<string> tmp_string;
+
+	// store every matched title
+	vector<vector<string>> Title_Cor_Search;		
+	// separate input by different lines
+	vector<vector<string>> parsed;
+	// pass by reference
+	parse_query(parsed, query);
+		
 
 	// from data_dir get file ....
 	// eg : use 0.txt in data directory
@@ -72,12 +123,14 @@ int main(int argc, char *argv[])
     // GET TITLENAME WORD ARRAY
     tmp_string = split(title_name, " ");
 
-	vector<string> title = word_parse(tmp_string);
+	//! COLLECTING ALL CONTENT (INCLUDING TITLE)
+	// vector<string> title = word_parse(tmp_string);
+	vector<string> content = word_parse(tmp_string);
 
-	for(auto &word : title){
-		cout << word << endl;
-	}
-
+	// for(auto &word : title){
+	// 	cout << word << endl;
+	// }
+	
     // GET CONTENT LINE BY LINE
 	while(getline(fi, tmp)){
 
@@ -85,16 +138,121 @@ int main(int argc, char *argv[])
 		tmp_string = split(tmp, " ");
 
 		// PARSE CONTENT
-		vector<string> content = word_parse(tmp_string);
-
+		// vector<string> content = word_parse(tmp_string);
+		for (auto it : word_parse(tmp_string)) {
+			content.push_back(it);
+		}
 		// for(auto &word : content){
 		// 	cout << word << endl;
 		// }
 		//......
 	}
-
     // CLOSE FILE
 	fi.close();
+
+	// creating suffix tree
+	auto suffixTree = SuffixTree();
+
+	for (auto &word : content) {
+		suffixTree.NewSuffix(word + "$");
+	}
+
+	// sub_str for comparison
+	string sub_str;
+	
+
+	// search by every line
+	for (int check = 0; check < parsed.size(); check++) {
+		int And_Or = -1; // Justify the operator is "AND" : 0 or "OR" : 1
+		int last_value = 0; // Represents the last true-value of matching
+
+		for (auto element : parsed[check]) {
+			switch (element[0]) {
+				// suffix search
+				case '*' :
+					cout << "SUFFIX: ";
+					sub_str = element.substr(1, element.length() - 2);
+					int find = suffix_compare(&suffixTree, sub_str);
+
+					// Operation
+					if (And_Or == 0) {
+						// AND
+						last_value = last_value && find;
+					}
+					else if (And_Or == 1) {
+						// OR
+						last_value = last_value || find;
+					}
+					else {
+						// initial
+						last_value = find;
+					}
+
+					cout << sub_str + " ";
+				continue;
+				// exact search
+				case '\"' :
+					cout << "EXACT: ";
+					sub_str = element.substr(1, element.length() - 2);
+					int find = suffix_compare(&suffixTree, sub_str);
+
+					// Operation
+					if (And_Or == 0) {
+						// AND
+						last_value = last_value && find;
+					}
+					else if (And_Or == 1) {
+						// OR
+						last_value = last_value || find;
+					}
+					else {
+						// initial
+						last_value = find;
+					}
+
+					cout << sub_str + " ";
+				continue;
+				// AND
+				case '+':
+					cout << "AND ";
+					And_Or = 0;
+				continue;
+				// OR
+				case '/':
+					cout << "OR ";
+					And_Or = 1;
+				continue;
+				// prefix search
+				default :
+					cout << "PREFIX: ";
+					sub_str = element;
+					int find = suffix_compare(&suffixTree, sub_str);
+
+					// Operation
+					if (And_Or == 0) {
+						// AND
+						last_value = last_value && find;
+					}
+					else if (And_Or == 1) {
+						// OR
+						last_value = last_value || find;
+					}
+					else {
+						// initial
+						last_value = find;
+					}
+
+					cout << sub_str + " ";
+				continue;
+			}
+		}
+		if (last_value == 1) {
+			Title_Cor_Search[check].push_back(title_name);
+		}
+		cout << endl;
+	}
+
+
 }
 
 

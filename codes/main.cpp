@@ -66,23 +66,123 @@ void parse_query(vector<vector<string>> &parsed, string query) {
 }
 
 // SUFFIX compare
-int suffix_compare(SuffixTree *trie, const string sub_str) {
-	int find = 0;
-
-	return find;
+int suffix_compare(SuffixTree *trie, const string& sub_str) {
+	//! same logic as creating suffix tree
+	
+	int n = 0;
+	int i = 0;
+	while (i < sub_str.length()) {
+		char b = sub_str[i];
+		int x2 = 0;
+		int n2;
+		while(1) {
+			auto children = trie->nodes[n].child;
+			if (x2 == children.size()) {
+				// not found
+				return false;
+			}
+			n2 = children[x2];
+			if (trie->nodes[n2].sub[0] == b) {
+				break;
+			}
+			x2++;		
+		}
+		auto sub2 = trie->nodes[n2].sub;
+		int j = 0;
+		while (j < sub2.size()) {
+			if (sub_str[i+j] != sub2[j]) {
+				// not found
+				return false;
+			}
+			j++;
+		}
+		i += j;
+		n = n2;
+	}
+	return true;
 }
 
 // EXACT compare
-int exact_compare(SuffixTree *trie, const string sub_str) {
-	int find = 0;
-
-	return find;
+int exact_compare(SuffixTree *trie, const string& sub_str) {
+	//! same logic as creating suffix tree
+	
+	int n = 0;
+	int i = 0;
+	while (i < sub_str.length()) {
+		char b = sub_str[i];
+		int x2 = 0;
+		int n2;
+		while(1) {
+			auto children = trie->nodes[n].child;
+			if (x2 == children.size()) {
+				// not found
+				return false;
+			}
+			n2 = children[x2];
+			if (trie->nodes[n2].sub[0] == b) {
+				break;
+			}
+			x2++;		
+		}
+		auto sub2 = trie->nodes[n2].sub;
+		int j = 0;
+		while (j < sub2.size()) {
+			if (sub_str[i+j] != sub2[j]) {
+				// not found
+				return false;
+			}
+			j++;
+		}
+		i += j;
+		n = n2;
+	}
+	// 額外確認是否有Exact標記
+	if (trie->nodes[n].type == 1) return true;
+	return false;
 }
 // PREFIX compare
-int prefix_compare(SuffixTree *trie, const string sub_str) {
-	int find = 0;
+int prefix_compare(SuffixTree *trie, const string& sub_str) {
+	//! same logic as creating suffix tree
+	
+	int n = 0;
+	int i = 0;
+	while (i < sub_str.length()) {
+		// current path does not lead to Exact_end
+		if (trie->nodes[n].type != 2) return false;
+		// match has already been found
+		if (sub_str[i] == '$') return true;
 
-	return find;
+		char b = sub_str[i];
+		int x2 = 0;
+		int n2;
+		while(1) {
+			auto children = trie->nodes[n].child;
+			if (x2 == children.size()) {
+				// not found
+				return false;
+			}
+			n2 = children[x2];
+			if (trie->nodes[n2].sub[0] == b) {
+				break;
+			}
+			x2++;		
+		}
+		auto sub2 = trie->nodes[n2].sub;
+		int j = 0;
+		while (j < sub2.size()) {
+			if (sub_str[i+j] == '$') return true;
+			if (sub_str[i+j] != sub2[j]) {
+				// not found
+				return false;
+			}
+			j++;
+		}
+		i += j;
+		n = n2;
+	}
+	// 若走到底, 額外確認是否有Exact標記
+	if (trie->nodes[n].type == 1) return true;
+	return false;
 }
 
 
@@ -164,93 +264,109 @@ int main(int argc, char *argv[])
 	// search by every line
 	for (int check = 0; check < parsed.size(); check++) {
 		int And_Or = -1; // Justify the operator is "AND" : 0 or "OR" : 1
-		int last_value = 0; // Represents the last true-value of matching
-
+		int last_value; // Represents the last true-value of matching
+		int result;
 		for (auto element : parsed[check]) {
 			switch (element[0]) {
 				// suffix search
 				case '*' :
-					cout << "SUFFIX: ";
-					sub_str = element.substr(1, element.length() - 2);
-					int find = suffix_compare(&suffixTree, sub_str);
+					// cout << "SUFFIX: ";
+					sub_str = element.substr(1, element.length() - 2) + "$";
+					result = suffix_compare(&suffixTree, sub_str);
+
+					// if (result == 1 ) {
+					// 	cout << "GETTA\n";
+					// }
 
 					// Operation
 					if (And_Or == 0) {
 						// AND
-						last_value = last_value && find;
+						last_value = last_value && result;
 					}
 					else if (And_Or == 1) {
 						// OR
-						last_value = last_value || find;
+						last_value = last_value || result;
 					}
 					else {
 						// initial
-						last_value = find;
+						last_value = result;
 					}
 
-					cout << sub_str + " ";
+					// cout << sub_str + " ";
 				continue;
 				// exact search
 				case '\"' :
-					cout << "EXACT: ";
-					sub_str = element.substr(1, element.length() - 2);
-					int find = suffix_compare(&suffixTree, sub_str);
+					// cout << "EXACT: ";
+					sub_str = element.substr(1, element.length() - 2) + "$";
+					result = exact_compare(&suffixTree, sub_str);
+
+					// if (result == 1 ) {
+					// 	cout << "GETTA\n";
+					// }
 
 					// Operation
 					if (And_Or == 0) {
 						// AND
-						last_value = last_value && find;
+						last_value = last_value && result;
 					}
 					else if (And_Or == 1) {
 						// OR
-						last_value = last_value || find;
+						last_value = last_value || result;
 					}
 					else {
 						// initial
-						last_value = find;
+						last_value = result;
 					}
 
-					cout << sub_str + " ";
+					// cout << sub_str + " ";
 				continue;
 				// AND
 				case '+':
-					cout << "AND ";
+					// cout << "AND ";
 					And_Or = 0;
 				continue;
 				// OR
 				case '/':
-					cout << "OR ";
+					// cout << "OR ";
 					And_Or = 1;
 				continue;
 				// prefix search
 				default :
-					cout << "PREFIX: ";
-					sub_str = element;
-					int find = suffix_compare(&suffixTree, sub_str);
+					// cout << "PREFIX: ";
+					sub_str = element + "$";
+					result = prefix_compare(&suffixTree, sub_str);
 
+					// if (result == 1 ) {
+					// 	cout << "GETTA\n";
+					// }
 					// Operation
 					if (And_Or == 0) {
 						// AND
-						last_value = last_value && find;
+						last_value = last_value && result;
 					}
 					else if (And_Or == 1) {
 						// OR
-						last_value = last_value || find;
+						last_value = last_value || result;
 					}
 					else {
 						// initial
-						last_value = find;
+						last_value = result;
 					}
 
-					cout << sub_str + " ";
+					// cout << sub_str + " ";
 				continue;
 			}
 		}
 		if (last_value == 1) {
-			Title_Cor_Search[check].push_back(title_name);
+			// Title_Cor_Search[check].push_back(title_name);
+			cout << "fit! ";
 		}
+		else cout << "not fit! ";
 		cout << endl;
 	}
+
+	
+
 
 
 }

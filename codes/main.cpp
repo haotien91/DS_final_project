@@ -5,6 +5,7 @@
 #include<vector>
 #include<iostream>
 #include<algorithm>
+#include<map>
 
 #include "Search_parse.h"
 
@@ -170,7 +171,7 @@ int prefix_compare(SuffixTree *trie, const string& sub_str) {
 		auto sub2 = trie->nodes[n2].sub;
 		int j = 0;
 		while (j < sub2.size()) {
-			if (sub_str[i+j] == '$') return true;
+			if (sub_str[i+j] == '$' && trie->nodes[n2].type != 0) return true;
 			if (sub_str[i+j] != sub2[j]) {
 				// not found
 				return false;
@@ -206,169 +207,194 @@ int main(int argc, char *argv[])
 	vector<string> tmp_string;
 
 	// store every matched title
-	vector<vector<string>> Title_Cor_Search;		
+	map<int, vector<string>> Title_Cor_Search;		
 	// separate input by different lines
 	vector<vector<string>> parsed;
 	// pass by reference
 	parse_query(parsed, query);
 		
+	// searching all data
+	int index_of_data = 0;
+	while (1) {
+		// from data_dir get file ....
+		// eg : use 0.txt in data directory
+		// fi.open("data-more/text.txt", ios::in);
+		fi.open(data_dir + to_string(index_of_data) + ".txt", ios::in);
 
-	// from data_dir get file ....
-	// eg : use 0.txt in data directory
-	fi.open("data/0.txt", ios::in);
-
-    // GET TITLENAME
-	getline(fi, title_name);
-
-    // GET TITLENAME WORD ARRAY
-    tmp_string = split(title_name, " ");
-
-	//! COLLECTING ALL CONTENT (INCLUDING TITLE)
-	// vector<string> title = word_parse(tmp_string);
-	vector<string> content = word_parse(tmp_string);
-
-	// for(auto &word : title){
-	// 	cout << word << endl;
-	// }
-	
-    // GET CONTENT LINE BY LINE
-	while(getline(fi, tmp)){
-
-        // GET CONTENT WORD VECTOR
-		tmp_string = split(tmp, " ");
-
-		// PARSE CONTENT
-		// vector<string> content = word_parse(tmp_string);
-		for (auto it : word_parse(tmp_string)) {
-			content.push_back(it);
+		if (!fi) {
+			cout << "Dead at index = " << index_of_data << endl;
+			fi.close();
+			break;
 		}
-		// for(auto &word : content){
+		// GET TITLENAME
+		getline(fi, title_name);
+
+		// GET TITLENAME WORD ARRAY
+		tmp_string = split(title_name, " ");
+
+		//! COLLECTING ALL CONTENT (INCLUDING TITLE)
+		// vector<string> title = word_parse(tmp_string);
+		vector<string> content = word_parse(tmp_string);
+
+		// for(auto &word : title){
 		// 	cout << word << endl;
 		// }
-		//......
-	}
-    // CLOSE FILE
-	fi.close();
+		
+		// GET CONTENT LINE BY LINE
+		while(getline(fi, tmp)){
 
-	// creating suffix tree
-	auto suffixTree = SuffixTree();
+			// GET CONTENT WORD VECTOR
+			tmp_string = split(tmp, " ");
 
-	for (auto &word : content) {
-		suffixTree.NewSuffix(word + "$");
-	}
-
-	// sub_str for comparison
-	string sub_str;
-	
-
-	// search by every line
-	for (int check = 0; check < parsed.size(); check++) {
-		int And_Or = -1; // Justify the operator is "AND" : 0 or "OR" : 1
-		int last_value; // Represents the last true-value of matching
-		int result;
-		for (auto element : parsed[check]) {
-			switch (element[0]) {
-				// suffix search
-				case '*' :
-					// cout << "SUFFIX: ";
-					sub_str = element.substr(1, element.length() - 2) + "$";
-					result = suffix_compare(&suffixTree, sub_str);
-
-					// if (result == 1 ) {
-					// 	cout << "GETTA\n";
-					// }
-
-					// Operation
-					if (And_Or == 0) {
-						// AND
-						last_value = last_value && result;
-					}
-					else if (And_Or == 1) {
-						// OR
-						last_value = last_value || result;
-					}
-					else {
-						// initial
-						last_value = result;
-					}
-
-					// cout << sub_str + " ";
-				continue;
-				// exact search
-				case '\"' :
-					// cout << "EXACT: ";
-					sub_str = element.substr(1, element.length() - 2) + "$";
-					result = exact_compare(&suffixTree, sub_str);
-
-					// if (result == 1 ) {
-					// 	cout << "GETTA\n";
-					// }
-
-					// Operation
-					if (And_Or == 0) {
-						// AND
-						last_value = last_value && result;
-					}
-					else if (And_Or == 1) {
-						// OR
-						last_value = last_value || result;
-					}
-					else {
-						// initial
-						last_value = result;
-					}
-
-					// cout << sub_str + " ";
-				continue;
-				// AND
-				case '+':
-					// cout << "AND ";
-					And_Or = 0;
-				continue;
-				// OR
-				case '/':
-					// cout << "OR ";
-					And_Or = 1;
-				continue;
-				// prefix search
-				default :
-					// cout << "PREFIX: ";
-					sub_str = element + "$";
-					result = prefix_compare(&suffixTree, sub_str);
-
-					// if (result == 1 ) {
-					// 	cout << "GETTA\n";
-					// }
-					// Operation
-					if (And_Or == 0) {
-						// AND
-						last_value = last_value && result;
-					}
-					else if (And_Or == 1) {
-						// OR
-						last_value = last_value || result;
-					}
-					else {
-						// initial
-						last_value = result;
-					}
-
-					// cout << sub_str + " ";
-				continue;
+			// PARSE CONTENT
+			// vector<string> content = word_parse(tmp_string);
+			for (auto it : word_parse(tmp_string)) {
+				content.push_back(it);
 			}
+			// for(auto &word : content){
+			// 	cout << word << endl;
+			// }
+			//......
 		}
-		if (last_value == 1) {
-			// Title_Cor_Search[check].push_back(title_name);
-			cout << "fit! ";
+		// CLOSE FILE
+		fi.close();
+
+		// creating suffix tree
+		auto suffixTree = SuffixTree();
+
+		for (auto &word : content) {
+			suffixTree.NewSuffix(word + "$");
 		}
-		else cout << "not fit! ";
-		cout << endl;
+
+		// sub_str for comparison
+		string sub_str;
+		
+
+		// search by every line
+		for (int check = 0; check < parsed.size(); check++) {
+			int And_Or = -1; // Justify the operator is "AND" : 0 or "OR" : 1
+			int last_value; // Represents the last true-value of matching
+			int result;
+			for (auto element : parsed[check]) {
+				switch (element[0]) {
+					// suffix search
+					case '*' :
+						// cout << "SUFFIX: ";
+						sub_str = element.substr(1, element.length() - 2) + "$";
+						result = suffix_compare(&suffixTree, sub_str);
+
+						// if (result == 1 ) {
+						// 	cout << "GETTA\n";
+						// }
+
+						// Operation
+						if (And_Or == 0) {
+							// AND
+							last_value = last_value && result;
+						}
+						else if (And_Or == 1) {
+							// OR
+							last_value = last_value || result;
+						}
+						else {
+							// initial
+							last_value = result;
+						}
+
+						// cout << sub_str + " ";
+					continue;
+					// exact search
+					case '\"' :
+						// cout << "EXACT: ";
+						sub_str = element.substr(1, element.length() - 2) + "$";
+						result = exact_compare(&suffixTree, sub_str);
+
+						// if (result == 1 ) {
+						// 	cout << "GETTA\n";
+						// }
+
+						// Operation
+						if (And_Or == 0) {
+							// AND
+							last_value = last_value && result;
+						}
+						else if (And_Or == 1) {
+							// OR
+							last_value = last_value || result;
+						}
+						else {
+							// initial
+							last_value = result;
+						}
+
+						// cout << sub_str + " ";
+					continue;
+					// AND
+					case '+':
+						// cout << "AND ";
+						And_Or = 0;
+					continue;
+					// OR
+					case '/':
+						// cout << "OR ";
+						And_Or = 1;
+					continue;
+					// prefix search
+					default :
+						// cout << "PREFIX: ";
+						sub_str = element + "$";
+						result = prefix_compare(&suffixTree, sub_str);
+
+						// if (result == 1 ) {
+						// 	cout << "GETTA\n";
+						// }
+						// Operation
+						if (And_Or == 0) {
+							// AND
+							last_value = last_value && result;
+						}
+						else if (And_Or == 1) {
+							// OR
+							last_value = last_value || result;
+						}
+						else {
+							// initial
+							last_value = result;
+						}
+
+						// cout << sub_str + " ";
+					continue;
+				}
+			}
+			if (last_value == 1) {
+				Title_Cor_Search[check].push_back(title_name);
+				// cout << "fit! ";
+			}
+			// else cout << "not fit! ";
+			// cout << endl;
+		}
+
+		index_of_data++;
 	}
 
-	
+	fi.open(output, ios::out);
+	if (!fi) {
+		cerr << "Can't open file\n";
+		exit(1);
+	}
 
-
-
+	for (int output = 0; output < parsed.size(); output++) {
+		// fi << "The " << output << " Line\n ";
+		auto tmp = Title_Cor_Search[output];
+		if (tmp.size() == 0) {
+			fi << "Not Found!" << endl;
+			continue;
+		}
+		for (auto it : tmp) {
+			fi << it << endl;
+		}
+	}
+	fi.close();
 }
 
 

@@ -14,7 +14,7 @@ using namespace std;
 // Utility Func
 
 // string parser : output vector of strings (words) after parsing
-vector<string> word_parse(vector<string> tmp_string){
+vector<string> word_parse(vector<string>& tmp_string){
 	vector<string> parse_string;
 	for(auto& word : tmp_string){
 		string new_str;
@@ -50,7 +50,7 @@ vector<string> split(const string& str, const string& delim) {
 
 // parsing query.txt
 
-void parse_query(vector<vector<string>> &parsed, string query) {
+void parse_query(vector<vector<string>> &parsed, string& query) {
 	fstream fi;
 	fi.open(query, ios::in);
 	string tmp;
@@ -67,7 +67,7 @@ void parse_query(vector<vector<string>> &parsed, string query) {
 }
 
 // SUFFIX compare
-int suffix_compare(SuffixTree *trie, const string& sub_str) {
+int suffix_compare(SuffixTree& trie, const string& sub_str) {
 	//! same logic as creating suffix tree
 	
 	int n = 0;
@@ -77,18 +77,18 @@ int suffix_compare(SuffixTree *trie, const string& sub_str) {
 		int x2 = 0;
 		int n2;
 		while(1) {
-			auto children = trie->nodes[n].child;
+			auto children = trie.nodes[n].child;
 			if (x2 == children.size()) {
 				// not found
 				return false;
 			}
 			n2 = children[x2];
-			if (trie->nodes[n2].sub[0] == b) {
+			if (trie.nodes[n2].sub[0] == b) {
 				break;
 			}
 			x2++;		
 		}
-		auto sub2 = trie->nodes[n2].sub;
+		auto sub2 = trie.nodes[n2].sub;
 		int j = 0;
 		while (j < sub2.size()) {
 			if (sub_str[i+j] != sub2[j]) {
@@ -104,7 +104,7 @@ int suffix_compare(SuffixTree *trie, const string& sub_str) {
 }
 
 // EXACT compare
-int exact_compare(SuffixTree *trie, const string& sub_str) {
+int exact_compare(SuffixTree& trie, const string& sub_str) {
 	//! same logic as creating suffix tree
 	
 	int n = 0;
@@ -114,18 +114,18 @@ int exact_compare(SuffixTree *trie, const string& sub_str) {
 		int x2 = 0;
 		int n2;
 		while(1) {
-			auto children = trie->nodes[n].child;
+			auto children = trie.nodes[n].child;
 			if (x2 == children.size()) {
 				// not found
 				return false;
 			}
 			n2 = children[x2];
-			if (trie->nodes[n2].sub[0] == b) {
+			if (trie.nodes[n2].sub[0] == b) {
 				break;
 			}
 			x2++;		
 		}
-		auto sub2 = trie->nodes[n2].sub;
+		auto sub2 = trie.nodes[n2].sub;
 		int j = 0;
 		while (j < sub2.size()) {
 			if (sub_str[i+j] != sub2[j]) {
@@ -138,18 +138,18 @@ int exact_compare(SuffixTree *trie, const string& sub_str) {
 		n = n2;
 	}
 	// 額外確認是否有Exact標記
-	if (trie->nodes[n].type == 1) return true;
+	if (trie.nodes[n].type == 1) return true;
 	return false;
 }
 // PREFIX compare
-int prefix_compare(SuffixTree *trie, const string& sub_str) {
+int prefix_compare(SuffixTree& trie, const string& sub_str) {
 	//! same logic as creating suffix tree
 	
 	int n = 0;
 	int i = 0;
 	while (i < sub_str.length()) {
 		// current path does not lead to Exact_end
-		if (trie->nodes[n].type != 2) return false;
+		if (trie.nodes[n].type != 2) return false;
 		// match has already been found
 		if (sub_str[i] == '$') return true;
 
@@ -157,21 +157,21 @@ int prefix_compare(SuffixTree *trie, const string& sub_str) {
 		int x2 = 0;
 		int n2;
 		while(1) {
-			auto children = trie->nodes[n].child;
+			auto children = trie.nodes[n].child;
 			if (x2 == children.size()) {
 				// not found
 				return false;
 			}
 			n2 = children[x2];
-			if (trie->nodes[n2].sub[0] == b) {
+			if (trie.nodes[n2].sub[0] == b) {
 				break;
 			}
 			x2++;		
 		}
-		auto sub2 = trie->nodes[n2].sub;
+		auto sub2 = trie.nodes[n2].sub;
 		int j = 0;
 		while (j < sub2.size()) {
-			if (sub_str[i+j] == '$' && trie->nodes[n2].type != 0) return true;
+			if (sub_str[i+j] == '$' && trie.nodes[n2].type != 0) return true;
 			if (sub_str[i+j] != sub2[j]) {
 				// not found
 				return false;
@@ -182,7 +182,7 @@ int prefix_compare(SuffixTree *trie, const string& sub_str) {
 		n = n2;
 	}
 	// 若走到底, 額外確認是否有Exact標記
-	if (trie->nodes[n].type == 1) return true;
+	if (trie.nodes[n].type == 1) return true;
 	return false;
 }
 
@@ -235,10 +235,6 @@ int main(int argc, char *argv[])
 		//! COLLECTING ALL CONTENT (INCLUDING TITLE)
 		// vector<string> title = word_parse(tmp_string);
 		vector<string> content = word_parse(tmp_string);
-
-		// for(auto &word : title){
-		// 	cout << word << endl;
-		// }
 		
 		// GET CONTENT LINE BY LINE
 		while(getline(fi, tmp)){
@@ -251,10 +247,6 @@ int main(int argc, char *argv[])
 			for (auto it : word_parse(tmp_string)) {
 				content.push_back(it);
 			}
-			// for(auto &word : content){
-			// 	cout << word << endl;
-			// }
-			//......
 		}
 		// CLOSE FILE
 		fi.close();
@@ -281,7 +273,7 @@ int main(int argc, char *argv[])
 					case '*' :
 						// cout << "SUFFIX: ";
 						sub_str = element.substr(1, element.length() - 2) + "$";
-						result = suffix_compare(&suffixTree, sub_str);
+						result = suffix_compare(suffixTree, sub_str);
 
 						// if (result == 1 ) {
 						// 	cout << "GETTA\n";
@@ -307,7 +299,7 @@ int main(int argc, char *argv[])
 					case '\"' :
 						// cout << "EXACT: ";
 						sub_str = element.substr(1, element.length() - 2) + "$";
-						result = exact_compare(&suffixTree, sub_str);
+						result = exact_compare(suffixTree, sub_str);
 
 						// if (result == 1 ) {
 						// 	cout << "GETTA\n";
@@ -343,7 +335,7 @@ int main(int argc, char *argv[])
 					default :
 						// cout << "PREFIX: ";
 						sub_str = element + "$";
-						result = prefix_compare(&suffixTree, sub_str);
+						result = prefix_compare(suffixTree, sub_str);
 
 						// if (result == 1 ) {
 						// 	cout << "GETTA\n";
@@ -384,7 +376,7 @@ int main(int argc, char *argv[])
 	}
 
 	for (int output = 0; output < parsed.size(); output++) {
-		// fi << "The " << output << " Line\n ";
+		// fi << "The " << output+1 << " Line\n ";
 		auto tmp = Title_Cor_Search[output];
 		if (tmp.size() == 0) {
 			fi << "Not Found!" << endl;
